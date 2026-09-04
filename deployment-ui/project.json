@@ -1,0 +1,36 @@
+{
+  "version": "0.1.0",
+  "projectSlug": "project-eden",
+  "projectName": "Project Eden",
+  "gameName": "The Planet Crafter",
+  "installFolderName": "The Planet Crafter Achievement Tracker",
+  "appExecutableName": "The Planet Crafter Achievement Tracker.exe",
+  "rawUninstallerName": "Uninstall The Planet Crafter Achievement Tracker.exe",
+  "customUninstallerName": "Project Eden Uninstaller.exe",
+  "setupArtifactName": "Planet-Crafter-Achievement-Tracker-Setup-v${version}.exe",
+  "accent": "#b366ee",
+  "accentBright": "#d4a1ff",
+  "accentDim": "#72449d",
+  "visual": {
+    "code": "EDEN // TERRAFORM LINK",
+    "motif": "BIOSPHERE SYSTEM",
+    "caption": "Local achievement companion \u00b7 terraformation telemetry",
+    "coordinate": "PLANET // LOCAL // READ ONLY"
+  },
+  "frameworkVersion": "2.0.4",
+  "copy": {
+    "readyEyebrow": "READY TO TERRAFORM",
+    "readyTitle": "Install Project Eden",
+    "readyBody": "A focused local companion for The Planet Crafter achievements, Steam state and optional world-save context.",
+    "readyNote": "The tracker is read-only. It does not modify saves, Steam data or The Planet Crafter files.",
+    "completeBody": "The achievement tracker is installed and ready to read your local Steam state.",
+    "removeBody": "Remove the Project Eden tracker from this PC. The Planet Crafter, Steam and world saves remain untouched.",
+    "uninstallCompleteBody": "Project Eden has been removed. The Planet Crafter and its saves were not changed.",
+    "steps": [
+      "Prepare",
+      "Deploy",
+      "Register",
+      "Finalise"
+    ]
+  }
+}

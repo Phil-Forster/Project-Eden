@@ -1,0 +1,77 @@
+{
+  "name": "planet-crafter-achievement-tracker",
+  "version": "0.1.0",
+  "description": "Read-only The Planet Crafter Steam achievement tracker with terraformation telemetry and optional save evidence",
+  "author": "Phil Forster",
+  "homepage": "https://philforster.co.uk",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "build:windows": "node tools/build-deployment.js",
+    "pack:windows": "electron-builder --win --x64 --dir",
+    "check:installer": "node tools/deployment-preflight.js",
+    "build:engine": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "43.1.1",
+    "electron-builder": "26.15.7"
+  },
+  "build": {
+    "appId": "uk.co.philforster.planetcrafterachievementtracker",
+    "productName": "The Planet Crafter Achievement Tracker",
+    "copyright": "Copyright \u00a9 2026 Phil Forster",
+    "asar": false,
+    "compression": "normal",
+    "directories": {
+      "output": "dist/engine",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "package.json",
+      "README.md",
+      "LOG.md"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "executableName": "The Planet Crafter Achievement Tracker"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "The Planet Crafter Achievement Tracker",
+      "uninstallDisplayName": "The Planet Crafter Achievement Tracker",
+      "runAfterFinish": false,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "deployment-engine-${version}.${ext}",
+      "include": "build/deployment-engine.nsh",
+      "installerIcon": "build/installerIcon.ico",
+      "uninstallerIcon": "build/uninstallerIcon.ico"
+    },
+    "extraFiles": [
+      {
+        "from": "build/generated/Project Eden Uninstaller.exe",
+        "to": "Project Eden Uninstaller.exe"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Phil-Forster/Project-Eden.git"
+  }
+}

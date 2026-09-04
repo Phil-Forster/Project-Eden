@@ -1,0 +1,8 @@
+{
+  "name": "project-eden-deployment-ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "description": "Bespoke installer/uninstaller shell for Project Eden",
+  "author": "Phil Forster"
+}
