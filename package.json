@@ -1,6 +1,6 @@
 {
   "name": "planet-crafter-achievement-tracker",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "description": "Read-only The Planet Crafter Steam achievement tracker with terraformation telemetry and optional save evidence",
   "author": "Phil Forster",
   "homepage": "https://philforster.co.uk",

@@ -124,17 +124,8 @@ function staticMetadata() {
 }
 
 
-const STAT_HINTS = {
-  "DRIVER'S ED DROPOUT": ['drivepark', 'park'],
-  'ARDA RECORD-KEEPER': ['loghalf', 'logbook', 'log'],
-  'PACKRAT': ['carstorage', 'storage'],
-  'LONG HAUL': ['drivefar', 'milesdriven', 'distance'],
-  'DIY EXPERT': ['inventhalf', 'invent'],
-  'ARDA LOREKEEPER': ['logmax', 'logbook', 'log'],
-  'LUMBERJACK': ['drivetrees', 'trees'],
-  'DIY MASTER': ['inventmax', 'invent'],
-  'WATCH OUT FOR HOP-ONS!': ['drivebunny', 'bunny']
-};
+// Project Eden only accepts achievement-specific stat links parsed from Steam's own schema.
+// No cross-game/name-guess fallback is permitted.
 
 function statNumericValue(stat) {
   if (!stat) return null;
@@ -150,12 +141,6 @@ function achievementTarget(name, row) {
   return Number.isFinite(target) && target > 0 ? target : null;
 }
 
-function keywordScore(name, statName) {
-  const haystack = String(statName || '').toLowerCase();
-  const hints = STAT_HINTS[normalizeName(name)] || [];
-  return hints.reduce((score, hint) => score + (haystack.includes(hint) ? 30 : 0), 0);
-}
-
 function chooseSteamStat(name, row, allStats = []) {
   const target = achievementTarget(name, row);
   const locked = row?.unlocked === false;
@@ -168,33 +153,11 @@ function chooseSteamStat(name, row, allStats = []) {
     return true;
   };
 
-  // Prefer the explicit stat token found inside this achievement's parsed
-  // KeyValues definition. This is deterministic and takes precedence over the
-  // legacy byte-distance heuristic.
+  // Only accept an exact achievement -> stat relationship parsed from Steam's
+  // own schema. If Steam does not expose one unambiguous counter, report no
+  // numeric progress rather than guessing from names or neighbouring stats.
   const structural = (allStats || []).filter((candidate) => schemaStats.includes(candidate.name) && usable(candidate));
   if (structural.length === 1) return { ...structural[0], match: 'schema-structure' };
-  if (structural.length > 1) {
-    const ranked = structural
-      .map((candidate) => ({ candidate, score: keywordScore(name, candidate.name) }))
-      .sort((left, right) => right.score - left.score);
-    if (ranked[0].score > 0 && (ranked.length === 1 || ranked[0].score > ranked[1].score)) {
-      return { ...ranked[0].candidate, match: 'schema-structure' };
-    }
-  }
-
-  // Byte proximity inside Valve's binary schema is intentionally not used.
-  // It can associate a neighbouring, unrelated statistic with an achievement.
-  // If the structural parser did not identify one exact field, accept only a
-  // unique strong name match from the small, achievement-specific hint table.
-  const semantic = (allStats || [])
-    .filter(usable)
-    .map((candidate) => ({ candidate, score: keywordScore(name, candidate.name) }))
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score);
-  if (semantic.length === 1 || (semantic.length > 1 && semantic[0].score > semantic[1].score)) {
-    return { ...semantic[0].candidate, match: 'stat-name' };
-  }
-
   return null;
 }
 

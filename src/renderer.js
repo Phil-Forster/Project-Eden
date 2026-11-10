@@ -12,24 +12,45 @@ const elements = {
   tourCoach: document.getElementById('tourCoach'), tourStepCount: document.getElementById('tourStepCount'),
   tourTitle: document.getElementById('tourTitle'), tourText: document.getElementById('tourText'),
   tourSkip: document.getElementById('tourSkip'), tourBack: document.getElementById('tourBack'),
-  tourNext: document.getElementById('tourNext'), scanState: document.getElementById('scanState')
+  tourNext: document.getElementById('tourNext'), scanState: document.getElementById('scanState'),
+  completionBanner: document.getElementById('completionBanner'), completionBannerMeta: document.getElementById('completionBannerMeta')
 };
 
 let activeFilter = 'all';
 let initialReadySignalled = false;
-const CARD_ART = [
-  'assets/achievement-card-barren.webp',
-  'assets/achievement-card-blue-sky.webp',
-  'assets/achievement-card-rain.webp',
-  'assets/achievement-card-moss.webp',
-  'assets/achievement-card-forest.webp',
-  'assets/achievement-card-lakes.webp',
-  'assets/achievement-card-night-terraform.webp',
-  'assets/achievement-card-lava.webp',
-  'assets/achievement-card-biosphere.webp',
-  'assets/achievement-card-wreck.webp',
-  'assets/achievement-card-portal.webp',
-  'assets/achievement-card-moon.webp'
+const CARD_ART_CLOSED = [
+  'assets/achievement-card-closed-01.webp',
+  'assets/achievement-card-closed-02.webp',
+  'assets/achievement-card-closed-03.webp',
+  'assets/achievement-card-closed-04.webp',
+  'assets/achievement-card-closed-05.webp',
+  'assets/achievement-card-closed-06.webp',
+  'assets/achievement-card-closed-07.webp',
+  'assets/achievement-card-closed-08.webp',
+  'assets/achievement-card-closed-09.webp',
+  'assets/achievement-card-closed-10.webp',
+  'assets/achievement-card-closed-11.webp',
+  'assets/achievement-card-closed-12.webp',
+  'assets/achievement-card-closed-13.webp',
+  'assets/achievement-card-closed-14.webp',
+  'assets/achievement-card-closed-15.webp'
+];
+const CARD_ART_OPEN = [
+  'assets/achievement-card-open-01.webp',
+  'assets/achievement-card-open-02.webp',
+  'assets/achievement-card-open-03.webp',
+  'assets/achievement-card-open-04.webp',
+  'assets/achievement-card-open-05.webp',
+  'assets/achievement-card-open-06.webp',
+  'assets/achievement-card-open-07.webp',
+  'assets/achievement-card-open-08.webp',
+  'assets/achievement-card-open-09.webp',
+  'assets/achievement-card-open-10.webp',
+  'assets/achievement-card-open-11.webp',
+  'assets/achievement-card-open-12.webp',
+  'assets/achievement-card-open-13.webp',
+  'assets/achievement-card-open-14.webp',
+  'assets/achievement-card-open-15.webp'
 ];
 const TOUR_STORAGE_KEY = 'planet-crafter-achievement-tracker-tour-v1';
 let tourIndex = -1;
@@ -43,8 +64,8 @@ const tourSteps = [
   { title: 'Completion instrument', text: 'The main dial is your at-a-glance Steam completion state. The count and percentage come from the same 55-achievement catalogue used throughout the tracker.', target: () => document.querySelector('.completion-instrument') },
   { title: 'Steam stays primary', text: 'The Steam link identifies the signed-in account and installation being read. Optional save evidence can add context, but it never overrides Steam achievement state.', target: () => document.querySelector('.status-panel') },
   { title: 'Optional save evidence', text: 'Choose an automatically discovered save or browse to another folder. Steam only remains the default, and saves are read-only.', target: () => document.querySelector('.save-source') },
-  { title: 'Acquisition telemetry', text: 'Steam read shows how many achievement states were resolved. Tracked counters appear only where Steam exposes a reliable exact statistic.', target: () => document.querySelector('[data-tour="steam-read"]') },
-  { title: 'Exact numeric counters', text: 'The tracker never guesses a counter from nearby values. This telemetry line shows how many achievements currently have trustworthy numeric progress.', target: () => document.querySelector('[data-tour="tracked-counters"]') },
+  { title: 'Acquisition telemetry', text: 'Steam read shows how many achievement states were resolved. Exact counters are shown only when The Planet Crafter explicitly exposes them through Steam.', target: () => document.querySelector('[data-tour="steam-read"]') },
+  { title: 'Exact numeric counters', text: 'The tracker never guesses numeric progress. If Steam does not expose an exact counter, this line reports that directly while locked/unlocked achievement state remains authoritative.', target: () => document.querySelector('[data-tour="tracked-counters"]') },
   { title: 'Filter the terraformation register', text: 'Narrow the achievement catalogue by state or search by achievement name and description.', target: () => document.querySelector('.toolbar') },
   { title: 'Refresh Steam state', text: 'Refresh runs a new Steam/save acquisition. The instrument panel shows a brief scan sweep while the read is in progress; the effect never delays the real result.', target: () => elements.refresh },
   { title: 'Open an achievement dossier', text: 'Select any achievement to open its terraforming record. The dossier carries its own artwork, Steam result, numeric progress, selected-save evidence and guidance; the opposing card keeps a planetary scene so the row remains visually balanced.', target: () => firstTourAchievementCard(), prepare: expandTourAchievement }
@@ -76,7 +97,7 @@ function renderSummary(data) {
   const unlocked = achievements.filter((item) => item.state === 'unlocked').length;
   const locked = achievements.filter((item) => item.state === 'locked').length;
   const unknown = achievements.filter((item) => item.state === 'unknown').length;
-  const tracked = achievements.filter((item) => item.displayProgress).length;
+  const exactCounters = achievements.filter((item) => item.displayProgress?.source === 'steam-local-stat').length;
   const percent = total > 0 ? Math.round((unlocked / total) * 100) : 0;
   const source = data.steam?.source === 'steam-local-api' ? 'Local UserStats'
     : data.steam?.source === 'steam-community' ? 'Community fallback' : 'Unresolved';
@@ -89,25 +110,76 @@ function renderSummary(data) {
 
   const label = document.createElement('div');
   label.className = 'instrument-label';
-  const labelLeft = document.createElement('span'); labelLeft.textContent = 'Route completion';
+  const labelLeft = document.createElement('span'); labelLeft.textContent = 'Terraforming completion';
   const labelRight = document.createElement('span'); labelRight.textContent = 'Eden record';
   label.append(labelLeft, labelRight);
 
   const dial = document.createElement('div');
-  dial.className = 'completion-dial completion-dial--arc';
+  dial.className = 'completion-dial completion-dial--eden';
   dial.style.setProperty('--completion-angle', `${Math.min(270, Math.max(0, percent * 2.7))}deg`);
   dial.setAttribute('role', 'img');
   dial.setAttribute('aria-label', `${percent}% complete, ${unlocked} of ${total} achievements unlocked`);
-  for (const [value, cls] of [['0','0'],['25','25'],['50','50'],['75','75'],['100','100']]) {
-    const tick = document.createElement('span'); tick.className = `arc-tick arc-tick--${cls}`; tick.textContent = value; dial.append(tick);
+
+  const ticks = document.createElement('span'); ticks.className = 'eden-dial-ticks';
+
+  const phaseScale = document.createElement('span');
+  phaseScale.className = 'eden-phase-scale';
+  phaseScale.setAttribute('aria-hidden', 'true');
+
+  const phaseRail = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  phaseRail.setAttribute('viewBox', '0 0 174 174');
+  phaseRail.setAttribute('preserveAspectRatio', 'none');
+  phaseRail.classList.add('eden-phase-rail');
+  const phasePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  phasePath.setAttribute('d', 'M31.9 133.3 A72 72 0 0 1 142.1 133.3');
+  phaseRail.append(phasePath);
+  phaseScale.append(phaseRail);
+
+  const phaseColours = [
+    '#efa052', '#d9b168', '#93c9ea', '#63c7e9', '#47cae2',
+    '#47c9d1', '#52ceb7', '#70d99c', '#67d48c', '#63cd83',
+    '#6ac9a2', '#72c5c5', '#84b8e6', '#b28ddd', '#d4a1ff'
+  ];
+  const phaseGeometry = { cx: 87, cy: 82, radius: 68, startAngle: 140, endAngle: 40 };
+  const phasePoints = [];
+
+  phaseColours.forEach((colour, index) => {
+    const t = index / (phaseColours.length - 1);
+    const angle = phaseGeometry.startAngle + ((phaseGeometry.endAngle - phaseGeometry.startAngle) * t);
+    const radians = (angle * Math.PI) / 180;
+    const point = {
+      x: phaseGeometry.cx + (phaseGeometry.radius * Math.cos(radians)),
+      y: phaseGeometry.cy + (phaseGeometry.radius * Math.sin(radians))
+    };
+    phasePoints.push(point);
+    const dot = document.createElement('span');
+    dot.className = `eden-phase-dot${index === 0 || index === 7 || index === 14 ? ' eden-phase-dot--anchor' : ''}`;
+    dot.style.left = `${point.x}px`;
+    dot.style.top = `${point.y}px`;
+    dot.style.setProperty('--phase-color', colour);
+    phaseScale.append(dot);
+  });
+
+  const labelAnchors = [
+    ['Barren', 'barren', phasePoints[0]],
+    ['Flora', 'flora', phasePoints[7]],
+    ['Complete', 'complete', phasePoints[14]]
+  ];
+
+  for (const [labelText, labelClass, point] of labelAnchors) {
+    const phaseLabel = document.createElement('span');
+    phaseLabel.className = `eden-phase-label eden-phase-label--${labelClass}`;
+    phaseLabel.textContent = labelText;
+    phaseLabel.style.left = `${point.x}px`;
+    phaseLabel.style.top = `${point.y + 10}px`; 
+    phaseScale.append(phaseLabel);
   }
-  const arcLine = document.createElement('span'); arcLine.className = 'arc-meter-line'; dial.append(arcLine);
 
   const core = document.createElement('div'); core.className = 'completion-core';
   const percentEl = document.createElement('span'); percentEl.className = 'completion-percent'; percentEl.textContent = `${percent}%`;
   const countEl = document.createElement('span'); countEl.className = 'completion-count'; countEl.textContent = `${unlocked} / ${total}`;
-  const captionEl = document.createElement('span'); captionEl.className = 'completion-caption'; captionEl.textContent = 'Route logged';
-  core.append(percentEl, countEl, captionEl); dial.append(core);
+  const captionEl = document.createElement('span'); captionEl.className = 'completion-caption'; captionEl.textContent = 'Terraform record';
+  core.append(percentEl, countEl, captionEl); dial.append(ticks, phaseScale, core);
   completion.append(label, dial);
 
   const telemetry = document.createElement('div'); telemetry.className = 'telemetry-stack';
@@ -115,7 +187,7 @@ function renderSummary(data) {
     ['Locked records', String(locked), locked > 0 ? 'neutral' : 'good'],
     ['Unknown records', String(unknown), unknown > 0 ? 'warning' : 'good'],
     ['Steam playtime', formatPlaytime(data.steam?.playtime?.minutes), 'neutral'],
-    ['Tracked counters', `${tracked} / ${total}`, tracked > 0 ? 'good' : 'neutral', 'tracked-counters'],
+    ['Exact Steam counters', exactCounters > 0 ? `${exactCounters} / ${total}` : 'Not exposed', exactCounters > 0 ? 'good' : 'neutral', 'tracked-counters'],
     ['Steam read', `${data.steam?.count || 0} / ${total} · ${source}`, Number(data.steam?.count || 0) === total ? 'good' : 'warning', 'steam-read'],
     ['Expedition record', data.saves?.selected ? data.saves.selected.type : 'Steam only', 'neutral']
   ];
@@ -129,6 +201,14 @@ function renderSummary(data) {
   }
 
   elements.summary.append(completion, telemetry);
+
+  const allComplete = total > 0 && unlocked === total && unknown === 0;
+  if (elements.completionBanner) {
+    elements.completionBanner.hidden = !allComplete;
+    if (allComplete && elements.completionBannerMeta) {
+      elements.completionBannerMeta.textContent = `${unlocked} / ${total} achievements unlocked · Eden record complete`;
+    }
+  }
 }
 
 function renderAchievements(data) {
@@ -140,7 +220,8 @@ function renderAchievements(data) {
     const body = node.querySelector('.achievement-body');
     const icon = node.querySelector('.achievement-icon');
     const fallback = node.querySelector('.achievement-icon-fallback');
-    card.style.setProperty('--card-art', `url("${CARD_ART[index % CARD_ART.length]}")`);
+    card.style.setProperty('--card-art-closed', `url("${CARD_ART_CLOSED[index % CARD_ART_CLOSED.length]}")`);
+    card.style.setProperty('--card-art-open', `url("${CARD_ART_OPEN[index % CARD_ART_OPEN.length]}")`);
     card.dataset.state = item.state;
     card.dataset.name = `${item.name} ${item.description}`.toLowerCase();
     const bodyId = `achievement-body-${index}`; body.id = bodyId; head.setAttribute('aria-controls', bodyId);
@@ -314,7 +395,6 @@ function render(data) {
   if (tourIndex >= 0) showTourStep(tourIndex); else maybeStartFirstRunTour();
   const total = data.achievements?.length || 0;
   if (!data.steam?.ok) showNotice(data.steam?.error || `Steam resolved ${data.steam?.count || 0} of ${total} achievement states.`);
-  else if (data.steam?.source === 'steam-local-api' && Number(data.steam?.statsCount || 0) === 0) showNotice('Achievement states resolved, but Steam exposed no numeric stat values. Start The Planet Crafter once, then refresh.');
   else showNotice(null);
 }
 
@@ -352,11 +432,11 @@ function preloadSources(sources) {
 }
 
 async function preloadCriticalArtwork() {
-  await preloadSources(['assets/app-background-eden.webp', ...CARD_ART.slice(0, 4)]);
+  await preloadSources(['assets/app-background-eden.webp', ...CARD_ART_CLOSED.slice(0, 2), ...CARD_ART_OPEN.slice(0, 2)]);
 }
 
 function preloadRemainingArtwork() {
-  const run = () => { preloadSources(CARD_ART.slice(4)); };
+  const run = () => { preloadSources([...CARD_ART_CLOSED.slice(2), ...CARD_ART_OPEN.slice(2)]); };
   if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 1500 });
   else window.setTimeout(run, 250);
 }

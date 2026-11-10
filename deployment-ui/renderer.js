@@ -47,6 +47,8 @@
     root.setProperty('--accent-bright', project.accentBright);
     root.setProperty('--accent-dim', project.accentDim);
     document.title = `${project.projectName} ${context.mode === 'uninstall' ? 'Uninstaller' : 'Setup'}`;
+    const hero = document.querySelector('.hero-image');
+    if (hero) hero.src = context.mode === 'uninstall' ? 'assets/hero-uninstall.webp' : 'assets/hero-install.webp';
     $('projectName').textContent = project.projectName;
     $('gameName').textContent = `${project.gameName} · Achievement Tracker`;
     $('readyEyebrow').textContent = project.copy.readyEyebrow;
