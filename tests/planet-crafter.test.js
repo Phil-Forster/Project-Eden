@@ -4,7 +4,18 @@ const {discoverSaveFiles}=require('../src/save-reader');
 test('contains all 55 current The Planet Crafter Steam achievements',()=>{assert.equal(ACHIEVEMENTS.length,55);assert.equal(new Set(ACHIEVEMENTS.map(x=>x.name)).size,55);});
 test('includes cumulative craft and Terra Token targets',()=>{assert.equal(SIMPLE_TARGETS['Barely surviving'].target,10);assert.equal(SIMPLE_TARGETS['Unstoppable'].target,1000);assert.equal(SIMPLE_TARGETS['Space magnate'].target,100000);});
 test('Steam state remains authoritative',()=>{const rows=mergeAchievementState(null,[{name:'Shelter',unlocked:true}]);assert.equal(rows.find(x=>x.name==='Shelter').state,'unlocked');assert.equal(rows.find(x=>x.name==='New Sky').state,'unknown');});
-test('save discovery reads json files only',()=>{const dir=fs.mkdtempSync(path.join(require('os').tmpdir(),'eden-test-'));fs.writeFileSync(path.join(dir,'WorldOne.json'),'{}');fs.writeFileSync(path.join(dir,'note.txt'),'x');const r=discoverSaveFiles({manualRoot:dir});assert.equal(r.files.length,1);assert.equal(r.files[0].name,'WorldOne.json');fs.rmSync(dir,{recursive:true,force:true});});
+test('save discovery reads json files only',t=>{
+  const dir=fs.mkdtempSync(path.join(require('os').tmpdir(),'eden-test-'));
+  t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  fs.writeFileSync(path.join(dir,'WorldOne.json'),'{}');
+  fs.writeFileSync(path.join(dir,'note.txt'),'x');
+  const result=discoverSaveFiles({manualRoot:dir});
+  // Discovery also includes the player's default save folder. Assert against this
+  // test's isolated directory, independently of any real saves on the machine.
+  const files=result.files.filter(file=>file.folder===path.resolve(dir));
+  assert.equal(files.length,1);
+  assert.equal(files[0].name,'WorldOne.json');
+});
 
 test('Eden UI does not instruct users to relaunch the game for absent numeric stats',()=>{const source=fs.readFileSync(path.join(__dirname,'..','src','renderer.js'),'utf8');assert.equal(source.includes('Start The Planet Crafter once'),false);assert.equal(source.includes('completion-dial--eden'),true);});
 test('Steam counter mapping contains no copied Pacific Drive heuristics',()=>{const source=fs.readFileSync(path.join(__dirname,'..','src','steam-reader.js'),'utf8');assert.equal(source.includes("DRIVER'S ED DROPOUT"),false);assert.equal(source.includes('schema-structure'),true);});
